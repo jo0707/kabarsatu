@@ -10,7 +10,7 @@ export default {
   theme: {
   	extend: {
   		fontFamily: {
-            sans: ["var(--font-geist-sans)", "sans-serif"], // Ensure Geist Sans is primary
+            sans: ["var(--font-inter)", "sans-serif"], // Use Inter font variable
         },
   		colors: {
   			background: 'hsl(var(--background))',
@@ -94,43 +94,48 @@ export default {
       typography: (theme: (arg0: string) => any) => ({ // Add typography styles
         DEFAULT: {
           css: {
-            color: theme('colors.foreground'),
-            a: {
-              color: theme('colors.accent.DEFAULT'),
+            '--tw-prose-body': theme('colors.foreground'),
+            '--tw-prose-headings': theme('colors.foreground'),
+            '--tw-prose-lead': theme('colors.foreground'),
+            '--tw-prose-links': theme('colors.accent.DEFAULT'),
+            '--tw-prose-bold': theme('colors.foreground'),
+            '--tw-prose-counters': theme('colors.muted.foreground'),
+            '--tw-prose-bullets': theme('colors.muted.foreground'),
+            '--tw-prose-hr': theme('colors.border'),
+            '--tw-prose-quotes': theme('colors.foreground'),
+            '--tw-prose-quote-borders': theme('colors.border'),
+            '--tw-prose-captions': theme('colors.muted.foreground'),
+            '--tw-prose-code': theme('colors.foreground'),
+            '--tw-prose-pre-code': theme('colors.foreground'),
+            '--tw-prose-pre-bg': theme('colors.muted.DEFAULT'),
+            '--tw-prose-th-borders': theme('colors.border'),
+            '--tw-prose-td-borders': theme('colors.border'),
+            '--tw-prose-invert-body': theme('colors.foreground'),
+            '--tw-prose-invert-headings': theme('colors.foreground'),
+            '--tw-prose-invert-lead': theme('colors.foreground'),
+            '--tw-prose-invert-links': theme('colors.accent.DEFAULT'),
+            '--tw-prose-invert-bold': theme('colors.foreground'),
+            '--tw-prose-invert-counters': theme('colors.muted.foreground'),
+            '--tw-prose-invert-bullets': theme('colors.muted.foreground'),
+            '--tw-prose-invert-hr': theme('colors.border'),
+            '--tw-prose-invert-quotes': theme('colors.foreground'),
+            '--tw-prose-invert-quote-borders': theme('colors.border'),
+            '--tw-prose-invert-captions': theme('colors.muted.foreground'),
+            '--tw-prose-invert-code': theme('colors.foreground'),
+            '--tw-prose-invert-pre-code': theme('colors.foreground'),
+            '--tw-prose-invert-pre-bg': theme('colors.muted.DEFAULT'),
+            '--tw-prose-invert-th-borders': theme('colors.border'),
+            '--tw-prose-invert-td-borders': theme('colors.border'),
+             a: {
+              // color: theme('colors.accent.DEFAULT'), // Use prose variables instead
               '&:hover': {
-                color: theme('colors.accent.DEFAULT / 90%'),
+                // color: theme('colors.accent.DEFAULT / 90%'), // Use prose variables instead
               },
               textDecoration: 'none', // Optional: remove underline
             },
-            h1: { color: theme('colors.foreground') },
-            h2: { color: theme('colors.foreground') },
-            h3: { color: theme('colors.foreground') },
-            h4: { color: theme('colors.foreground') },
-            strong: { color: theme('colors.foreground') },
-            blockquote: {
-                color: theme('colors.muted.foreground'),
-                borderLeftColor: theme('colors.border'),
-            },
-            // Customize other elements as needed
-          },
-        },
-         dark: { // Add styles for dark mode if needed
-          css: {
-             color: theme('colors.foreground'),
-            a: {
-              color: theme('colors.accent.DEFAULT'),
-              '&:hover': {
-                color: theme('colors.accent.DEFAULT / 90%'),
-              },
-            },
-             h1: { color: theme('colors.foreground') },
-             h2: { color: theme('colors.foreground') },
-             h3: { color: theme('colors.foreground') },
-             h4: { color: theme('colors.foreground') },
-             strong: { color: theme('colors.foreground') },
-              blockquote: {
-                color: theme('colors.muted.foreground'),
-                borderLeftColor: theme('colors.border'),
+             blockquote: {
+                // color: theme('colors.muted.foreground'), // Use prose variables instead
+                // borderLeftColor: theme('colors.border'), // Use prose variables instead
             },
           },
         },

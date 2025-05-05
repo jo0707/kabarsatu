@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: var(--font-geist-sans), sans-serif;
-}
-
 @layer base {
   :root {
     --background: 0 0% 98%; /* Light Gray */
@@ -84,6 +80,6 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased; /* font-sans will use variable */
   }
 }

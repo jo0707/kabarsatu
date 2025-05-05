@@ -1,15 +1,13 @@
 import type { Metadata } from 'next';
-import { GeistSans } from 'next/font/google'; // Use GeistSans directly
+import { Inter } from 'next/font/google'; // Use Inter from Google Fonts
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster'; // Import Toaster
 import Header from '@/components/layout/Header'; // Import Header
 
-const geistSans = GeistSans({
-  variable: '--font-geist-sans',
+const inter = Inter({
+  variable: '--font-inter', // Define CSS variable for Inter
   subsets: ['latin'],
 });
-
-// Removed Geist Mono as it wasn't explicitly requested
 
 export const metadata: Metadata = {
   title: 'KabarSatu - Portal Berita Terkini', // Updated title
@@ -23,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id"> {/* Set language to Indonesian */}
-      <body className={`${geistSans.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} font-sans antialiased`}> {/* Use Inter variable */}
         <div className="flex min-h-screen flex-col">
           <Header /> {/* Add the Header */}
           <main className="flex-grow container mx-auto px-4 py-8">
