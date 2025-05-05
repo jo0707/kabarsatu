@@ -1,27 +1,50 @@
+
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import type { NextAuthOptions } from 'next-auth';
 
-if (!process.env.GOOGLE_CLIENT_ID) {
-  throw new Error('Missing GOOGLE_CLIENT_ID environment variable');
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+// Provide a default development secret if NEXTAUTH_SECRET is missing, but require it in production.
+const nextAuthSecret = process.env.NEXTAUTH_SECRET ?? (process.env.NODE_ENV !== 'production' ? 'development-secret-key' : undefined);
+
+// Validate environment variables
+if (!googleClientId) {
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error('Missing GOOGLE_CLIENT_ID environment variable in production. Google OAuth cannot be configured.');
+    } else {
+        console.warn('Missing GOOGLE_CLIENT_ID environment variable. Google login disabled in development.');
+    }
 }
-if (!process.env.GOOGLE_CLIENT_SECRET) {
-  throw new Error('Missing GOOGLE_CLIENT_SECRET environment variable');
+if (!googleClientSecret) {
+     if (process.env.NODE_ENV === 'production') {
+        throw new Error('Missing GOOGLE_CLIENT_SECRET environment variable in production. Google OAuth cannot be configured.');
+    } else {
+        console.warn('Missing GOOGLE_CLIENT_SECRET environment variable. Google login disabled in development.');
+    }
 }
-if (!process.env.NEXTAUTH_SECRET) {
-    console.warn('Missing NEXTAUTH_SECRET environment variable. Using a generated value for development. Set a proper secret for production!');
+if (!nextAuthSecret && process.env.NODE_ENV === 'production') {
+     // Throw error only in production if NEXTAUTH_SECRET is truly missing (not just using the dev default)
+     throw new Error('Missing NEXTAUTH_SECRET environment variable in production. Authentication cannot be secured.');
+} else if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV !== 'production') {
+     // Warn if using the default development secret
+     console.warn('Missing NEXTAUTH_SECRET environment variable. Using a default insecure key for development. Set a proper secret for production!');
 }
+
 
 export const authOptions: NextAuthOptions = {
   // Configure one or more authentication providers
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
+    // Conditionally add GoogleProvider only if credentials exist
+    ...(googleClientId && googleClientSecret ? [
+        GoogleProvider({
+          clientId: googleClientId,
+          clientSecret: googleClientSecret,
+        })
+      ] : []),
     // ...add more providers here if needed
   ],
-  secret: process.env.NEXTAUTH_SECRET, // Secret used to encrypt the session cookie
+  secret: nextAuthSecret, // Use the determined secret
   pages: {
     signIn: '/login', // Redirect users to custom login page
     // signOut: '/auth/signout',

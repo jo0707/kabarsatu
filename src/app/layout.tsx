@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google'; // Use Inter from Google Fonts
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster'; // Import Toaster
 import Header from '@/components/layout/Header'; // Import Header
@@ -26,7 +26,7 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions);
 
   return (
-    <html lang="id"> {/* Set language to Indonesian */}
+    <html lang="id">
       <body className={`${inter.variable} font-sans antialiased`}> {/* Use Inter variable */}
          {/* Wrap everything with AuthProvider, passing the session */}
         <AuthProvider session={session}>
