@@ -1,16 +1,19 @@
-'use client'; // Mark as client component for potential future interaction
+'use client'; // Mark as client component for using hooks and event handlers
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-// Import Google icon or use a library like lucide-react if available
 import { Chrome } from "lucide-react"; // Using Chrome as a placeholder for Google icon
+import { signIn } from "next-auth/react"; // Import signIn from next-auth
+import { useSearchParams } from "next/navigation"; // To get callbackUrl
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/'; // Get callbackUrl or default to home
 
-  const handleGoogleLogin = () => {
-    // TODO: Implement Google OAuth2 login flow
-    alert("Fungsi Login Google belum diimplementasikan.");
-    // This would typically redirect to Google's OAuth endpoint
+  const handleGoogleLogin = async () => {
+    // Use next-auth signIn function for Google provider
+    await signIn("google", { callbackUrl });
+    // No need for alert, signIn handles redirection
   };
 
   return (
@@ -22,12 +25,7 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent className="space-y-6">
            {/* Placeholder for potential username/password form if needed later */}
-           {/* <div className="space-y-4">
-             <Input id="email" placeholder="Email" type="email" />
-             <Input id="password" placeholder="Password" type="password" />
-           </div>
-           <Button type="submit" className="w-full">Login Manual</Button>
-           <Separator className="my-4" /> */}
+           {/* ... */}
            <Button variant="outline" className="w-full" onClick={handleGoogleLogin}>
             <Chrome className="mr-2 h-5 w-5" /> {/* Placeholder Icon */}
             Login dengan Google
