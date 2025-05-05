@@ -9,6 +9,9 @@ export default {
   ],
   theme: {
   	extend: {
+  		fontFamily: {
+            sans: ["var(--font-geist-sans)", "sans-serif"], // Ensure Geist Sans is primary
+        },
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
@@ -87,8 +90,56 @@ export default {
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out'
-  		}
+  		},
+      typography: (theme: (arg0: string) => any) => ({ // Add typography styles
+        DEFAULT: {
+          css: {
+            color: theme('colors.foreground'),
+            a: {
+              color: theme('colors.accent.DEFAULT'),
+              '&:hover': {
+                color: theme('colors.accent.DEFAULT / 90%'),
+              },
+              textDecoration: 'none', // Optional: remove underline
+            },
+            h1: { color: theme('colors.foreground') },
+            h2: { color: theme('colors.foreground') },
+            h3: { color: theme('colors.foreground') },
+            h4: { color: theme('colors.foreground') },
+            strong: { color: theme('colors.foreground') },
+            blockquote: {
+                color: theme('colors.muted.foreground'),
+                borderLeftColor: theme('colors.border'),
+            },
+            // Customize other elements as needed
+          },
+        },
+         dark: { // Add styles for dark mode if needed
+          css: {
+             color: theme('colors.foreground'),
+            a: {
+              color: theme('colors.accent.DEFAULT'),
+              '&:hover': {
+                color: theme('colors.accent.DEFAULT / 90%'),
+              },
+            },
+             h1: { color: theme('colors.foreground') },
+             h2: { color: theme('colors.foreground') },
+             h3: { color: theme('colors.foreground') },
+             h4: { color: theme('colors.foreground') },
+             strong: { color: theme('colors.foreground') },
+              blockquote: {
+                color: theme('colors.muted.foreground'),
+                borderLeftColor: theme('colors.border'),
+            },
+          },
+        },
+      }),
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require('@tailwindcss/typography'), // Add typography plugin
+    require('@tailwindcss/line-clamp') // Add line-clamp plugin
+    ],
 } satisfies Config;
