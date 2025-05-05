@@ -26,4 +26,8 @@ export interface NewsArticle {
    * The source or publication from which the news article originated.
    */
   source: string;
+  /**
+   * Optional: The full scraped content of the article (HTML or plain text).
+   */
+  content?: string;
 }

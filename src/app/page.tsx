@@ -5,11 +5,11 @@ import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 async function NewsList() {
-  // Fetch news articles - specify placeholder sources if needed by the service
-  const articles = await getNewsArticles(['placeholder1', 'placeholder2', 'placeholder3']);
+  // Fetch news articles - let the service handle default sources or scraping logic
+  const articles: NewsArticle[] = await getNewsArticles();
 
   if (!articles || articles.length === 0) {
-    return <p className="text-center text-muted-foreground">Belum ada berita tersedia.</p>;
+    return <p className="text-center text-muted-foreground">Belum ada berita tersedia atau gagal mengambil data.</p>;
   }
 
   return (
@@ -45,7 +45,7 @@ export default function Home() {
     <div>
       <h1 className="text-3xl font-bold mb-6 border-b pb-2">Berita Utama</h1>
       <Suspense fallback={<NewsListSkeleton />}>
-         {/* @ts-expect-error Server Component */}
+         {/* Type assertion needed because TS can't infer the awaited promise type in JSX */}
         <NewsList />
       </Suspense>
     </div>
