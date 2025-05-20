@@ -1,6 +1,7 @@
 import { getNewsArticles } from '@/services/news-aggregator';
 import type { NewsArticle } from '@/types';
-import Image from 'next/image';
+// Import the new client component for rendering images
+import ArticleImage from '@/components/news/ArticleImage';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -29,56 +30,35 @@ const formatFullDate = (dateString: string): string => {
     // Check if the date object is valid
     if (isNaN(date.getTime())) {
       console.warn(`Invalid date format in detail page: ${dateString}`);
-      // Attempt to parse common non-standard formats if necessary, or return fallback
-      // Example: Try parsing DD/MM/YYYY if ISO fails (add more as needed)
-      // const parts = dateString.split('/');
-      // if (parts.length === 3) {
-      //   const parsed = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-      //   if (!isNaN(parsed.getTime())) {
-      //       return format(parsed, "EEEE, dd MMMM yyyy HH:mm 'WIB'", { locale: id });
-      //   }
-      // }
       return 'Tanggal tidak valid';
     }
-    // Example format: Senin, 29 Juli 2024 16:30 WIB
-    // Note: Timezone handling might need adjustment based on source data/requirements
-    // Assuming the ISO string is in UTC, adjust accordingly if it's local time.
     return format(date, "EEEE, dd MMMM yyyy HH:mm 'WIB'", { locale: id });
   } catch (error) {
     console.error(`Error formatting date in detail page: ${dateString}`, error);
-    return 'Format tanggal bermasalah'; // More specific fallback
+    return 'Format tanggal bermasalah';
   }
 };
 
 // Function to render article content (handles basic HTML or plain text)
 const renderArticleContent = (content: string | undefined, summary: string): React.ReactNode => {
     if (content) {
-        // Basic sanitization/check (in real app, use a proper sanitizer like DOMPurify)
         if (content.includes('<script')) {
              console.warn("Potential script tag found in content, rendering as text.");
-             return <p>{content}</p>; // Render as plain text if potentially unsafe
+             return <p>{content}</p>;
         }
-
-        // Attempt to render as HTML if it looks like HTML
-        // A more robust check would involve cheerio or regex
         if (content.trim().startsWith('<') && content.trim().endsWith('>')) {
             try {
-                // Use dangerouslySetInnerHTML cautiously. Ensure content is trusted or sanitized.
-                // For this example, we assume the simulated scraped content is safe.
                  return <div dangerouslySetInnerHTML={{ __html: content }} />;
             } catch (e) {
                  console.error("Error rendering potentially unsafe HTML content", e);
-                 return <p>{content}</p>; // Fallback to plain text
+                 return <p>{content}</p>;
             }
         } else {
-            // Render as plain text paragraphs
             return content.split('\n').map((paragraph, index) => (
                 <p key={index}>{paragraph}</p>
             ));
         }
     }
-
-    // Fallback content if no full content is available
     return (
         <>
             <p className="lead text-xl mb-6">{summary}</p>
@@ -99,17 +79,13 @@ const renderArticleContent = (content: string | undefined, summary: string): Rea
 
 export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
   const { slug } = params;
-  // Decode the URL slug which contains the original article URL
   const decodedUrl = decodeURIComponent(slug);
-
-  // Fetch all articles (simulating finding the specific one by URL)
-  // In a real-world scenario with a database, you'd fetch by ID or slug directly.
-  const articles = await getNewsArticles(); // Fetches based on the scraping logic now
+  const articles = await getNewsArticles();
   const article = articles.find((a) => a.url === decodedUrl);
 
   if (!article) {
     console.log(`Article not found for decoded URL: ${decodedUrl}`);
-    notFound(); // Show 404 if article not found
+    notFound();
   }
 
   return (
@@ -122,33 +98,16 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
           <span>{formatFullDate(article.publicationDate)}</span>
         </div>
         <div className="relative aspect-video w-full rounded-lg overflow-hidden shadow-md mb-6 bg-muted">
-          {article.imageUrl ? (
-             <Image
-                src={article.imageUrl}
-                alt={article.title}
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 66vw"
-                className="object-cover"
-                data-ai-hint="news article detail"
-                priority // Prioritize the main image
-                // Only unoptimize if it's explicitly a picsum URL (or other known unoptimized source)
-                unoptimized={article.imageUrl.includes('picsum.photos')}
-                onError={(e) => {
-                    console.error(`Failed to load image: ${article.imageUrl}`);
-                    // Optionally replace src with a fallback image on error
-                    // e.currentTarget.src = '/images/fallback.png';
-                 }}
-             />
-          ) : (
-             <div className="flex items-center justify-center h-full text-muted-foreground">
-                 Gambar tidak tersedia
-             </div>
-          )}
-
+          {/* Use the new ArticleImage client component */}
+          <ArticleImage
+            src={article.imageUrl}
+            alt={article.title}
+            priority
+            unoptimized={article.imageUrl?.includes('picsum.photos')}
+          />
         </div>
       </header>
 
-      {/* Use prose for typography styling, max-w-none to override default width limit */}
       <div className="prose prose-lg dark:prose-invert max-w-none">
         {renderArticleContent(article.content, article.summary)}
       </div>
@@ -165,20 +124,10 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
   );
 }
 
-// Optional: Generate static paths if you know the articles beforehand
-// export async function generateStaticParams() {
-//   // Fetch articles based on your scraping/data source logic
-//   const articles = await getNewsArticles();
-//   return articles.map((article) => ({
-//     slug: encodeURIComponent(article.url),
-//   }));
-// }
-
-// Add metadata generation
 export async function generateMetadata({ params }: NewsDetailPageProps) {
   const { slug } = params;
   const decodedUrl = decodeURIComponent(slug);
-  const articles = await getNewsArticles(); // Fetch based on scraping logic
+  const articles = await getNewsArticles();
   const article = articles.find((a) => a.url === decodedUrl);
 
   if (!article) {
@@ -187,7 +136,7 @@ export async function generateMetadata({ params }: NewsDetailPageProps) {
     };
   }
 
-  const effectiveImageUrl = article.imageUrl || '/images/default-og-image.png'; // Fallback OG image
+  const effectiveImageUrl = article.imageUrl || '/images/default-og-image.png';
 
   return {
     title: `${article.title} | KabarSatu`,
@@ -198,16 +147,16 @@ export async function generateMetadata({ params }: NewsDetailPageProps) {
         images: [
             {
                 url: effectiveImageUrl,
-                width: 600, // Adjust if actual image dimensions are known
-                height: 400, // Adjust if actual image dimensions are known
+                width: 600,
+                height: 400,
                 alt: article.title,
             },
         ],
-        url: `/berita/${slug}`, // Use the app's URL for the detail page
+        url: `/berita/${slug}`,
         siteName: 'KabarSatu',
         type: 'article',
-        publishedTime: article.publicationDate || undefined, // Only include if valid
-        authors: [article.source || 'KabarSatu'], // Use source as author placeholder
+        publishedTime: article.publicationDate || undefined,
+        authors: [article.source || 'KabarSatu'],
     },
      twitter: {
         card: 'summary_large_image',

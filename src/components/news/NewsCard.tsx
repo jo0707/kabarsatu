@@ -1,3 +1,5 @@
+'use client'; // Mark as a Client Component
+
 import Link from 'next/link';
 import Image from 'next/image';
 import type { NewsArticle } from '@/types';
