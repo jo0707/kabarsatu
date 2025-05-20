@@ -1,7 +1,6 @@
 import type { NewsArticle } from "@/types"
 import * as cheerio from "cheerio"
 import axios from "axios"
-import { deleteAllArticles, insertArticlesBatch } from "./firebase-news"
 
 async function scrapeKumparanIndonesia(): Promise<NewsArticle[] | null> {
     const url = "https://www.antaranews.com/"
