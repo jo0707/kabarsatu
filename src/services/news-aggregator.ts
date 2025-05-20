@@ -1,166 +1,258 @@
-import type { NewsArticle } from "@/types";
-import * as cheerio from 'cheerio';
+import type { NewsArticle } from "@/types"
+import * as cheerio from "cheerio"
+import axios from "axios"
+import { deleteAllArticles, insertArticlesBatch } from "./firebase-news"
 
-// --- Helper Function for Scraping (Example) ---
-async function scrapeExampleArticle(url: string, sourceName: string): Promise<NewsArticle | null> {
+async function scrapeKumparanIndonesia(): Promise<NewsArticle[] | null> {
+    const url = "https://www.antaranews.com/"
+
     try {
-        // IMPORTANT: In a real scenario, fetch the actual URL.
-        // We are using placeholder HTML here to demonstrate scraping without hitting external sites.
-        // const response = await fetch(url, { headers: { 'User-Agent': 'KabarSatu-Aggregator/1.0' } });
-        // if (!response.ok) {
-        //     console.error(`Failed to fetch ${url}: ${response.statusText}`);
-        //     return null;
-        // }
-        // const html = await response.text();
+        const { data: html } = await axios.get(url, {
+            headers: {
+                "User-Agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Cache-Control": "no-cache",
+                Pragma: "no-cache",
+                "Upgrade-Insecure-Requests": "1",
+            },
+            timeout: 10000,
+        })
 
-        // --- SIMULATED HTML CONTENT ---
-        // Replace this with actual fetched HTML in a real implementation
-        const simulatedHtml = `
-        <html>
-            <head><title>Example Article Title</title></head>
-            <body>
-                <article>
-                    <header>
-                        <h1>Terobosan Teknologi AI Mengubah Industri Kesehatan Global</h1>
-                        <img src="https://picsum.photos/seed/aihealth/600/400" alt="AI in health">
-                        <time datetime="2024-07-28T09:00:00Z">July 28, 2024</time>
-                    </header>
-                    <div class="summary">
-                        <p>Kecerdasan buatan merevolusi diagnosis penyakit, penemuan obat baru...</p>
-                    </div>
-                    <a href="${url}" class="original-link">Read more</a>
-                </article>
-            </body>
-        </html>`;
-        // --- END SIMULATED HTML ---
+        const $ = cheerio.load(html)
+        const articles: NewsArticle[] = []
 
-        const $ = cheerio.load(simulatedHtml); // Use simulatedHtml instead of fetched html
+        // Select the first 3 articles
+        $(".card__post.card__post-list")
+            .slice(0, 3)
+            .each((_, el) => {
+                const article = $(el)
+                const anchor = article.find(".card__post__title a")
+                const title = anchor.attr("title") || ""
+                const url = anchor.attr("href") || ""
+                const imageUrl = article.find("picture img").attr("src") || ""
+                const summary = title // Using title as summary
+                let publicationDate = new Date().toISOString()
 
-        // --- SELECTORS (Adjust based on actual target website structure) ---
-        const title = $('article h1').first().text().trim();
-        const summary = $('div.summary p').first().text().trim();
-        // Prioritize specific image tag, fallback to og:image or first img
-        let imageUrl = $('article header img').first().attr('src');
-        if (!imageUrl) {
-            imageUrl = $('meta[property="og:image"]').attr('content');
-        }
-        if (!imageUrl) {
-             imageUrl = $('img').first().attr('src');
-        }
-         // Make image URL absolute if it's relative
-         if (imageUrl && !imageUrl.startsWith('http')) {
-             try {
-                const pageUrl = new URL(url);
-                imageUrl = new URL(imageUrl, pageUrl.origin).toString();
-             } catch (e) {
-                 console.warn(`Could not make image URL absolute for ${url}: ${imageUrl}`);
-                 imageUrl = `https://picsum.photos/seed/${Math.random()}/600/400`; // Fallback placeholder
-             }
+                const dateText = article.find(".card__post__author-info .text-secondary").text().trim()
+                if (dateText.includes("menit lalu")) {
+                    const minutesAgo = parseInt(dateText.split(" ")[0], 10)
+                    if (!isNaN(minutesAgo)) {
+                        const date = new Date()
+                        date.setMinutes(date.getMinutes() - minutesAgo)
+                        publicationDate = date.toISOString()
+                    }
+                } else if (dateText.includes("jam lalu")) {
+                    const hoursAgo = parseInt(dateText.split(" ")[0], 10)
+                    if (!isNaN(hoursAgo)) {
+                        const date = new Date()
+                        date.setHours(date.getHours() - hoursAgo)
+                        publicationDate = date.toISOString()
+                    }
+                }
 
-         } else if (!imageUrl) {
-             imageUrl = `https://picsum.photos/seed/${Math.random()}/600/400`; // Fallback placeholder if no image found
-         }
+                articles.push({
+                    title,
+                    summary,
+                    url,
+                    imageUrl,
+                    publicationDate,
+                    source: "Kumparan Indonesia",
+                })
+            })
 
-
-        // Extract and parse date (requires robust parsing based on site format)
-        const publicationDateStr = $('article header time').first().attr('datetime');
-        let publicationDate: string;
-        if (publicationDateStr && !isNaN(new Date(publicationDateStr).getTime())) {
-            publicationDate = new Date(publicationDateStr).toISOString();
-        } else {
-             console.warn(`Could not parse date for ${url}. Using current time.`);
-             publicationDate = new Date().toISOString(); // Fallback to now
-        }
-
-        // --- Basic Validation ---
-        if (!title || !summary || !url) {
-             console.warn(`Missing essential data for article from ${sourceName} at ${url}`);
-             return null;
-        }
-
-
-        return {
-            title,
-            summary,
-            url, // Use the original URL provided
-            imageUrl,
-            publicationDate,
-            source: sourceName,
-        };
-
+        return articles
     } catch (error) {
-        console.error(`Error scraping ${sourceName} article at ${url}:`, error);
-        return null;
+        console.error(`Error scraping Kumparan Indonesia articles:`, error)
+        return null
     }
 }
 
+async function scrapeSindoNews(): Promise<NewsArticle[] | null> {
+    try {
+        const { data: html } = await axios.get("http://international.sindonews.com/jagad-jungkir-balik", {
+            headers: {
+                "User-Agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Cache-Control": "no-cache",
+                Pragma: "no-cache",
+                "Upgrade-Insecure-Requests": "1",
+            },
+            timeout: 10000,
+        })
 
-/**
- * Asynchronously retrieves and aggregates news articles by scraping example sources.
- *
- * NOTE: This implementation uses *simulated* scraping on placeholder HTML.
- * In a real application, this would fetch and parse live web pages.
- * Respect robots.txt and terms of service of target websites. Add delays
- * and error handling to be a responsible scraper.
- *
- * @param sources Optional array of source identifiers (currently mapped to example URLs).
- * @returns A promise that resolves to an array of NewsArticle objects.
- */
+        const $ = cheerio.load(html)
+        const articles: NewsArticle[] = []
+
+        // Select articles with data-no values 2, 3, and 4
+        $('.list-article[data-no="2"], .list-article[data-no="3"], .list-article[data-no="4"]').each((_, el) => {
+            const article = $(el)
+            const anchor = article.find("a")
+            const title = article.find(".title-article.news-title").text().trim()
+            const summary = article.find(".sub-kanal").text().trim() || title
+            const url = anchor.attr("href") || ""
+            const imageUrl = article.find(".img-article img").attr("src") || ""
+
+            // Extract publication date
+            let publicationDate = new Date().toISOString()
+            const dateText = article.find(".date-article").text().trim()
+            if (dateText) {
+                if (dateText.includes("WIB")) {
+                    // Format: "07 Mei 2025 - 18:29 WIB"
+                    const dateMatch = dateText.match(/(\d+)\s+([^\s]+)\s+(\d{4})\s+-\s+(\d+):(\d+)/)
+                    if (dateMatch) {
+                        const day = dateMatch[1].padStart(2, "0")
+                        const monthName = dateMatch[2]
+                        const year = dateMatch[3]
+                        const hour = dateMatch[4].padStart(2, "0")
+                        const minute = dateMatch[5].padStart(2, "0")
+
+                        // Convert month name to month number (assuming Indonesian month names)
+                        const monthMapping: { [key: string]: string } = {
+                            Jan: "01",
+                            Feb: "02",
+                            Mar: "03",
+                            Apr: "04",
+                            Mei: "05",
+                            Jun: "06",
+                            Jul: "07",
+                            Agu: "08",
+                            Sep: "09",
+                            Okt: "10",
+                            Nov: "11",
+                            Des: "12",
+                        }
+
+                        const month = monthMapping[monthName] || "01"
+                        const dateStr = `${year}-${month}-${day}T${hour}:${minute}:00`
+                        publicationDate = new Date(dateStr).toISOString()
+                    }
+                } else if (dateText.includes("hari yang lalu")) {
+                    // Format: "3 hari yang lalu"
+                    const daysAgo = parseInt(dateText.split(" ")[0], 10)
+                    if (!isNaN(daysAgo)) {
+                        const date = new Date()
+                        date.setDate(date.getDate() - daysAgo)
+                        publicationDate = date.toISOString()
+                    }
+                }
+            }
+
+            articles.push({
+                title,
+                summary,
+                url,
+                imageUrl,
+                publicationDate,
+                source: "Sindo News",
+            })
+        })
+
+        return articles
+    } catch (error) {
+        console.error(`Error scraping Sindonews articles:`, error)
+        return null
+    }
+}
+
+async function scrapeCnbcIndonesia(): Promise<NewsArticle[] | null> {
+    const url = "https://www.cnbcindonesia.com/entrepreneur"
+    try {
+        const { data: html } = await axios.get(url, {
+            headers: {
+                "User-Agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Cache-Control": "no-cache",
+                Pragma: "no-cache",
+                "Upgrade-Insecure-Requests": "1",
+            },
+            timeout: 10000,
+        })
+
+        const $ = cheerio.load(html)
+        const articles: NewsArticle[] = []
+
+        // Select the first 3 <article> elements
+        $(".nhl-list article")
+            .slice(0, 3)
+            .each((_, el) => {
+                const anchor = $(el).find("a")
+                const title = anchor.find("h2").text().trim()
+                const summary = title // Using title as summary since CNBC doesn't have separate summaries
+                const url = anchor.attr("href") || ""
+                const imageUrl = anchor.find("img").attr("src") || ""
+
+                // Parse publication date
+                let publicationDate = new Date().toISOString()
+                const dateText = anchor.find(".text-xs.text-gray").text().trim()
+
+                if (dateText) {
+                    const daysAgoMatch = dateText.match(/(\d+) hari yang lalu/)
+                    if (daysAgoMatch) {
+                        const daysAgo = parseInt(daysAgoMatch[1], 10)
+                        if (!isNaN(daysAgo)) {
+                            const date = new Date()
+                            date.setDate(date.getDate() - daysAgo)
+                            publicationDate = date.toISOString()
+                        }
+                    } else if (dateText.includes("minggu yang lalu")) {
+                        const date = new Date()
+                        date.setDate(date.getDate() - 7)
+                        publicationDate = date.toISOString()
+                    }
+                }
+
+                articles.push({
+                    title,
+                    summary,
+                    url,
+                    imageUrl,
+                    publicationDate,
+                    source: "CNBC Indonesia",
+                })
+            })
+
+        return articles
+    } catch (error) {
+        console.error(`Error scraping CNBC Indonesia articles at ${url}:`, error)
+        return null
+    }
+}
+
 export async function getNewsArticles(sources?: string[]): Promise<NewsArticle[]> {
+    const allArticles: NewsArticle[] = []
+    const sourceFunctions: { [key: string]: () => Promise<NewsArticle[] | null> } = {
+        "Kumparan Indonesia": scrapeKumparanIndonesia,
+        "Sindo News": scrapeSindoNews,
+        "CNBC Indonesia": scrapeCnbcIndonesia,
+    }
 
-  // Map source identifiers to example URLs and names
-  const sourceMap: { [key: string]: { url: string, name: string } } = {
-    'teknologi': { url: "https://example.com/news/ai-kesehatan-global", name: "Berita Teknologi Terkini" },
-    'ekonomi': { url: "https://example.com/news/pasar-saham-asia-stimulus", name: "Warta Ekonomi Global" },
-    'energi': { url: "https://example.com/news/indonesia-energi-terbarukan-2030", name: "Kabar Nusantara Hijau" },
-    'sains': { url: "https://example.com/news/spesies-laut-dalam-mariana", name: "Jurnal Sains Kelautan" },
-    'hiburan': { url: "https://example.com/news/festival-film-internasional-luring", name: "Sorotan Hiburan Dunia" },
-    'bisnis': { url: "https://example.com/news/startup-edutech-pendanaan-seri-b", name: "Bisnis Digital Hari Ini" },
-  };
+    if (sources) {
+        for (const source of sources) {
+            const articles = await sourceFunctions[source]()
+            if (articles) {
+                allArticles.push(...articles)
+            }
+        }
+    } else {
+        for (const source in sourceFunctions) {
+            const articles = await sourceFunctions[source]()
+            if (articles) {
+                allArticles.push(...articles)
+            }
+        }
+    }
 
-  // Use provided sources or default to all examples
-  const sourcesToScrape = sources && sources.length > 0
-    ? sources.filter(s => s in sourceMap)
-    : Object.keys(sourceMap);
+    // if (allArticles.length !== 0) {
+    //     deleteAllArticles()
+    // }
 
-  if (sourcesToScrape.length === 0) {
-    console.warn("No valid sources provided or mapped for scraping.");
-    return [];
-  }
+    // insertArticlesBatch(allArticles)    
 
-  console.log(`Attempting to scrape sources: ${sourcesToScrape.join(', ')}`);
-
-  // --- Scraping Execution ---
-  const scrapingPromises = sourcesToScrape.map(key => {
-      const sourceInfo = sourceMap[key];
-      // Simulate scraping one article per source
-      return scrapeExampleArticle(sourceInfo.url, sourceInfo.name);
-  });
-
-  // Wait for all scraping attempts to complete
-  const results = await Promise.all(scrapingPromises);
-
-  // Filter out null results (failed scrapes)
-  const articles: NewsArticle[] = results.filter((article): article is NewsArticle => article !== null);
-
-  // Simulate network delay (optional, but good practice for real scraping)
-  // await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 500));
-
-  if (articles.length === 0) {
-      console.log("No articles successfully scraped.");
-      // Return placeholder data if scraping fails completely in this example
-      return [
-          {
-              title: "Gagal Mengambil Berita (Contoh)",
-              summary: "Tidak dapat mengambil berita dari sumber manapun saat ini. Ini adalah data contoh.",
-              url: "https://example.com/fallback",
-              imageUrl: "https://picsum.photos/seed/fallback/600/400",
-              publicationDate: new Date().toISOString(),
-              source: "Sistem KabarSatu",
-          },
-      ];
-  }
-
-  console.log(`Successfully scraped ${articles.length} articles.`);
-  return articles;
+    return allArticles
 }

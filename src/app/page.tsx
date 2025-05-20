@@ -3,18 +3,30 @@ import { getNewsArticles } from '@/services/news-aggregator';
 import NewsCard from '@/components/news/NewsCard';
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from 'react-day-picker';
+import Link from 'next/link';
 
 async function NewsList() {
-  // Fetch news articles - let the service handle default sources or scraping logic
   const articles: NewsArticle[] = await getNewsArticles();
 
+  console.log('Articles:', articles); 
+
   if (!articles || articles.length === 0) {
-    return <p className="text-center text-muted-foreground">Belum ada berita tersedia atau gagal mengambil data.</p>;
+    return (
+        <div>
+            <p className="text-center text-muted-foreground">Belum ada berita tersedia atau gagal mengambil data.</p>
+            <Link href="/scrape" className="flex justify-center">
+                <button className="mt-4">
+                    Ambil Berita
+                </button>
+            </Link>
+        </div>
+    )
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {articles.map((article) => (
+      {articles.reverse().map((article) => (
         <NewsCard key={article.url} article={article} />
       ))}
     </div>

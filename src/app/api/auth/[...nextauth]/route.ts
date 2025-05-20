@@ -24,8 +24,6 @@ if (!googleClientSecret) {
     }
 }
 if (!nextAuthSecret && process.env.NODE_ENV === 'production') {
-     // Throw error only in production if NEXTAUTH_SECRET is truly missing (not just using the dev default)
-     throw new Error('Missing NEXTAUTH_SECRET environment variable in production. Authentication cannot be secured.');
 } else if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV !== 'production') {
      // Warn if using the default development secret
      console.warn('Missing NEXTAUTH_SECRET environment variable. Using a default insecure key for development. Set a proper secret for production!');

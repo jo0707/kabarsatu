@@ -2,6 +2,7 @@
  * Represents a news article with standardized metadata.
  */
 export interface NewsArticle {
+  id?: string;
   /**
    * The title of the news article.
    */

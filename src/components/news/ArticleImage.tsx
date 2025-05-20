@@ -1,7 +1,6 @@
 // src/components/news/ArticleImage.tsx
 'use client';
 
-import Image from 'next/image';
 import { useState } from 'react';
 
 interface ArticleImageProps {
@@ -23,15 +22,11 @@ export default function ArticleImage({ src, alt, priority, unoptimized }: Articl
   }
 
   return (
-    <Image
+    <img
       src={src}
       alt={alt}
-      fill
-      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 66vw"
-      className="object-cover"
+      className="object-cover w-full h-full"
       data-ai-hint="news article detail"
-      priority={priority}
-      unoptimized={unoptimized}
       onError={() => {
         console.error(`Failed to load image: ${src}`);
         setImageError(true);

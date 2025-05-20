@@ -1,7 +1,6 @@
 'use client'; // Mark as a Client Component
 
 import Link from 'next/link';
-import Image from 'next/image';
 import type { NewsArticle } from '@/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -49,15 +48,11 @@ export default function NewsCard({ article }: NewsCardProps) {
         <Card className="h-full flex flex-col overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-accent border bg-card text-card-foreground shadow-sm">
            <CardHeader className="p-0">
              <div className="relative aspect-video w-full bg-muted"> {/* Add background color */}
-                <Image
+                <img
                   src={article.imageUrl || '/images/placeholder-news.svg'} // Fallback image
                   alt={article.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-300"
                   data-ai-hint="news article list"
-                  priority={true} // Consider removing if too many cards load initially
-                  unoptimized={article.imageUrl?.includes('picsum.photos')} // Optional: Disable optimization for Picsum
                   onError={(e) => {
                     console.warn(`Failed to load image for article: ${article.title}, URL: ${article.imageUrl}`);
                     // Optionally set a visible fallback or hide the image element
